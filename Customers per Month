@@ -1,0 +1,68 @@
+import pandas as pd
+import plotly.express as px
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Step 3: Group by 'month_year' and aggregate the necessary statistics
+    monthly_df = df.groupby(by='month_year').agg({
+        'unit_price': 'mean',
+        'total_price': 'sum',
+        'freight_price': 'sum',
+        'qty': 'sum',
+        'weekday': 'sum',
+        'weekend': 'sum',
+        'customers': 'sum'
+    }).reset_index()
+
+    # Convert 'month_year' to datetime format
+    monthly_df['month_year'] = pd.to_datetime(monthly_df['month_year'], format='%d-%m-%Y')
+    monthly_df = monthly_df.sort_values(by='month_year')
+
+    # Step 4: Create the bar chart for customers per month
+    fig = px.bar(monthly_df,
+                 x='month_year',
+                 y='customers',
+                 title='Customers per Month',
+                 labels={'month_year': 'Month', 'customers': 'Number of Customers'},
+                 color_discrete_sequence=['#003366'])  # Dark blue bars for visibility
+
+    # Step 5: Update the layout with a light background
+    fig.update_layout(
+        title_font=dict(size=24, color='#333333'),  # Dark gray title for contrast
+        paper_bgcolor='#E6F0FA',  # Light blue overall background
+        plot_bgcolor='#F2F6FC',   # Slightly darker blue plot background
+        font=dict(color='#333333'),  # Dark gray font for readability
+        xaxis=dict(
+            title_font=dict(size=18, color='#333333'),
+            tickfont=dict(color='#333333'),
+            showgrid=True,  # Gridlines for better clarity
+            gridcolor='#CCCCCC',  # Light gray gridlines
+            zerolinecolor='#AAAAAA'  # Light gray zero line for subtle contrast
+        ),
+        yaxis=dict(
+            title_font=dict(size=18, color='#333333'),
+            tickfont=dict(color='#333333'),
+            showgrid=True,
+            gridcolor='#CCCCCC',
+            zerolinecolor='#AAAAAA'
+        ),
+        margin=dict(l=40, r=40, t=80, b=40),
+    )
+
+    # Step 6: Show the plot
+    fig.show()
+
+    # Optional: Save the figure as HTML
+    fig.write_html('bar_customers_per_month.html')
+
+    # Step 7: Download the HTML file
+    files.download('bar_customers_per_month.html')
