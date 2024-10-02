@@ -1,0 +1,99 @@
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Step 3: Group by 'month_year' and aggregate the necessary statistics
+    monthly_df = df.groupby(by='month_year').agg({
+        'unit_price': 'mean',
+        'total_price': 'sum',
+        'freight_price': 'sum',
+        'qty': 'sum',
+        'weekday': 'sum',
+        'weekend': 'sum',
+        'customers': 'sum'
+    }).reset_index()
+
+    # Convert 'month_year' to datetime format
+    monthly_df['month_year'] = pd.to_datetime(monthly_df['month_year'], format='%d-%m-%Y')
+    monthly_df = monthly_df.sort_values(by='month_year')
+
+    # Calculate total price contributed by weekdays and weekends for pie chart
+    total_weekdays = monthly_df['total_price'].sum() * (monthly_df['weekday'].sum() / (monthly_df['weekday'].sum() + monthly_df['weekend'].sum()))
+    total_weekends = monthly_df['total_price'].sum() * (monthly_df['weekend'].sum() / (monthly_df['weekday'].sum() + monthly_df['weekend'].sum()))
+
+    # Data for pie chart
+    pie_data = pd.DataFrame({
+        'Day Type': ['Weekdays', 'Weekends'],
+        'Total Price': [total_weekdays, total_weekends]
+    })
+
+    # Step 4: Create subplots for line and pie chart
+    fig = make_subplots(
+        rows=1, cols=2,
+        specs=[[{"type": "scatter"}, {"type": "pie"}]],
+        subplot_titles=("Total Price Trends: Weekdays vs Weekends", "Total Price Distribution: Weekdays vs Weekends"),
+        column_widths=[0.7, 0.3]  # Adjust width ratio for the subplots
+    )
+
+    # Add line chart for weekdays and weekends
+    fig.add_trace(
+        go.Scatter(x=monthly_df['month_year'],
+                   y=monthly_df['weekday'],
+                   mode='lines+markers',
+                   name='Weekdays',
+                   line=dict(color='#003366', width=2),
+                   marker=dict(color='#003366', size=6)),
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go.Scatter(x=monthly_df['month_year'],
+                   y=monthly_df['weekend'],
+                   mode='lines+markers',
+                   name='Weekends',
+                   line=dict(color='#FF6600', width=2),
+                   marker=dict(color='#FF6600', size=6)),
+        row=1, col=1
+    )
+
+    # Add pie chart
+    fig.add_trace(
+        go.Pie(labels=pie_data['Day Type'], values=pie_data['Total Price'],
+               marker=dict(colors=['#003366', '#FF6600'])),
+        row=1, col=2
+    )
+
+    # Update layout
+    fig.update_layout(
+        title='Analysis of Total Price: Weekdays vs Weekends',
+        title_font=dict(size=24, color='#333333'),  # Dark gray title
+        paper_bgcolor='#E6F0FA',  # Light blue overall background
+        font=dict(color='#333333'),  # Dark gray font for readability
+        height=600,  # Adjust height of the graph
+        width=1500,  # Set width to 1500px for better responsiveness
+        autosize=True  # Make the figure responsive
+    )
+
+    # Update axis titles for line chart
+    fig.update_xaxes(title_text='Month-Year', row=1, col=1)
+    fig.update_yaxes(title_text='Total Price', row=1, col=1)
+
+    # Step 5: Show the plot
+    fig.show()
+
+    # Optional: Save the figure as HTML
+    fig.write_html('combined_line_and_pie_chart_full_width.html')
+
+    # Step 6: Download the HTML file
+    files.download('combined_line_and_pie_chart_full_width.html')
