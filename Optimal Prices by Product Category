@@ -1,0 +1,77 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from google.colab import files
+from IPython.display import display, HTML
+
+# Step 1: Load the dataset
+file_path = 'retail_price.csv'  # Replace with your actual file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Step 2: Data preprocessing
+    X = df.drop(['product_id', 'unit_price'], axis=1)  # Drop non-relevant columns
+    X = pd.get_dummies(X)  # One-hot encoding for categorical variables
+    y = df['unit_price']  # Target variable: unit price
+
+    # Step 3: Train the Random Forest Regressor
+    model = RandomForestRegressor(n_estimators=50, random_state=42)
+    model.fit(X, y)
+
+    # Step 4: Predict optimal prices (assuming that your 'unit_price' is the target)
+    y_pred = model.predict(X)
+
+    # Step 5: Create a DataFrame with product categories and predicted prices
+    df['predicted_price'] = y_pred
+
+    # Get the unique product categories and their optimal predicted prices
+    optimal_prices_df = df[['product_category_name', 'predicted_price']].groupby('product_category_name').mean().reset_index()
+
+    # Step 6: Display the table as HTML
+    html_table = optimal_prices_df.to_html(index=False)
+
+    # Customize the table to make it visually appealing
+    html = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                background-color: #E6F0FA;
+                font-family: Arial, sans-serif;
+            }}
+            table {{
+                width: 80%;
+                margin: 50px auto;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 18px;
+            }}
+            th, td {{
+                padding: 12px;
+                border: 1px solid #ddd;
+            }}
+            th {{
+                background-color: #4CAF50;
+                color: white;
+            }}
+            tr:nth-child(even) {{
+                background-color: #f2f2f2;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2 style="text-align:center;">Optimal Prices by Product Category</h2>
+        {html_table}
+    </body>
+    </html>
+    """
+
+    # Step 7: Display the HTML in Google Colab
+    display(HTML(html))
+
+    # Optional: Save the HTML to a file and download it
+    with open('optimal_prices_table.html', 'w') as f:
+        f.write(html)
+    files.download('optimal_prices_table.html')
