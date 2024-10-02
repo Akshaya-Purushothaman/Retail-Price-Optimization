@@ -1,0 +1,63 @@
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Check if the necessary columns exist in the DataFrame
+    if 'unit_price' in df.columns and all(f'comp_{i}' in df.columns for i in range(1, 4)):
+        # Step 3: Calculate price differences
+        df['comp1_diff'] = df['unit_price'] - df['comp_1']
+        df['comp2_diff'] = df['unit_price'] - df['comp_2']
+        df['comp3_diff'] = df['unit_price'] - df['comp_3']
+
+        # Step 4: Create subplots for each competitor's price difference
+        fig = make_subplots(rows=1, cols=3,
+                            subplot_titles=("Competitor 1 Price Difference",
+                                            "Competitor 2 Price Difference",
+                                            "Competitor 3 Price Difference"))
+
+        # Define contrasting colors
+        colors = ['#1F77B4', '#FF7F0E', '#2CA02C']  # Dark Blue, Orange, Green
+
+        for i in range(1, 4):
+            comp = f"comp{i}_diff"
+            fig.add_trace(
+                go.Bar(
+                    x=df['product_category_name'],
+                    y=df[comp],
+                    name=f'Competitor {i}',
+                    marker_color=colors[i - 1],  # Use defined colors
+                ),
+                row=1, col=i
+            )
+
+        # Step 5: Update layout
+        fig.update_layout(
+            title_text="Price Difference per Unit by Competitor",
+            xaxis_title="Product Category",
+            yaxis_title="Price Difference",
+            showlegend=False,
+            paper_bgcolor='#E6F0FA',  # Set the background color of the paper
+            plot_bgcolor='rgba(255,255,255,0)'  # Set plot background to transparent
+        )
+
+        # Step 6: Show the plot
+        fig.show()
+
+        # Optional: Save the figure as HTML
+        fig.write_html('bar_competitor_price_differences_no_numbers.html')
+
+        # Step 7: Download the HTML file
+        files.download('bar_competitor_price_differences_no_numbers.html')
+    else:
+        print("Necessary columns 'unit_price' or 'comp_1', 'comp_2', 'comp_3' do not exist in the DataFrame.")
