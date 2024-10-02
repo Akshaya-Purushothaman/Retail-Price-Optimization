@@ -1,0 +1,134 @@
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+import plotly.express as px
+from google.colab import files
+import ipywidgets as widgets
+from IPython.display import display, HTML
+
+# Load the retail data
+file_path = 'retail_price.csv'  # Replace with your actual file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Print column names for debugging
+    print("Initial columns:", df.columns.tolist())
+
+    # Data Cleaning
+    df.dropna(inplace=True)  # Remove rows with missing values
+
+    # Change the format according to your data
+    df['month_year'] = pd.to_datetime(df['month_year'], format='%d-%m-%Y', dayfirst=True)  # Ensure date format is correct
+
+    # Extract date features
+    df['year'] = df['month_year'].dt.year
+    df['month'] = df['month_year'].dt.month
+    df.drop('month_year', axis=1, inplace=True)  # Drop the original date column
+
+    # Print column names after processing
+    print("Columns after processing:", df.columns.tolist())
+
+    # Prepare the data for modeling
+    X, y = df.drop(['product_id', 'unit_price'], axis=1), df['unit_price']
+
+    # Check if 'product_category_name' is in the DataFrame
+    if 'product_category_name' not in df.columns:
+        print("Column 'product_category_name' is not found in the DataFrame.")
+
+    # Save a copy of the DataFrame with categorical features for later use
+    df_with_categories = df.copy()
+
+    # One-hot encoding for categorical variables
+    X = pd.get_dummies(X, drop_first=True)
+
+    # Split data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train a Random Forest Regressor
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+
+    # Predict future prices on the test set
+    y_pred = model.predict(X_test)
+
+    # Step 1: Feature Importance Analysis
+    feature_importances = model.feature_importances_
+    feature_names = X.columns
+
+    # Create a DataFrame to display feature importance
+    feature_importance_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Importance': feature_importances
+    }).sort_values(by='Importance', ascending=False)
+
+    # Step 2: Recommendations based on feature importance and predictions
+    recommendations = []
+
+    # Example feature importance thresholds
+    threshold_competitor = 0.2
+    threshold_customers = 0.15
+
+    if 'comp_1' in X.columns:  # Assume comp_1 represents competitor pricing
+        competitor_price_influence = feature_importance_df.loc[feature_importance_df['Feature'] == 'comp_1', 'Importance'].values[0]
+
+        if competitor_price_influence > threshold_competitor:
+            recommendations.append("Competitor pricing is crucial. Adjust your prices based on competitor data to remain competitive.")
+
+    if 'customers' in X.columns:
+        customer_demand_influence = feature_importance_df.loc[feature_importance_df['Feature'] == 'customers', 'Importance'].values[0]
+
+        if customer_demand_influence > threshold_customers:
+            recommendations.append("Customer demand is significant. Increase prices when demand is high to maximize revenue.")
+        else:
+            recommendations.append("Customer demand is low. Consider offering discounts to attract more customers.")
+
+    # Low and high predicted price analysis
+    low_predicted_price_indices = np.where(y_pred < np.percentile(y_pred, 25))[0]
+    if len(low_predicted_price_indices) > 0:
+        low_price_categories = X_test_cat.iloc[low_predicted_price_indices]['product_category_name'].unique()
+        recommendations.append(f"Consider discounts for low-performing categories: {', '.join(low_price_categories)}.")
+
+    high_predicted_price_indices = np.where(y_pred > np.percentile(y_pred, 75))[0]
+    if len(high_predicted_price_indices) > 0:
+        high_price_categories = X_test_cat.iloc[high_predicted_price_indices]['product_category_name'].unique()
+        recommendations.append(f"Increase prices for high-demand categories: {', '.join(high_price_categories)}.")
+
+    # Additional recommendations based on other analyses
+    recommendations.append("Consider analyzing customer feedback to understand price sensitivity and optimize further.")
+    recommendations.append("Monitor seasonal trends closely to adjust pricing dynamically according to demand fluctuations.")
+    recommendations.append("Leverage promotions during holidays to attract more customers and increase sales volume.")
+
+    # Step 3: Provide recommendations based on different price strategies
+    recommendations_output = "\n".join(f"- {rec}" for rec in recommendations)
+
+    # Display Recommendations
+    print("\nRecommendations based on the analysis:")
+    print(recommendations_output)
+
+    # Visualization: Average Lag Price by Product Category
+    lag_price_fig = px.bar(df,
+                            x='product_category_name',
+                            y='lag_price',
+                            title='Average Lag Price by Product Category',
+                            labels={'product_category_name': 'Product Category', 'lag_price': 'Average Lag Price'},
+                            color='lag_price')
+
+    # Save the figure as HTML
+    lag_price_fig.write_html('lag_price_by_category.html')
+
+    # Display plot and download link
+    display(HTML("<h2>Average Lag Price by Product Category</h2>"))
+    display(lag_price_fig)
+
+    # Download link for the HTML file
+    download_link = widgets.Button(description='Download Lag Price Chart')
+    display(download_link)
+
+    def download_file(b):
+        files.download('lag_price_by_category.html')
+
+    download_link.on_click(download_file)
