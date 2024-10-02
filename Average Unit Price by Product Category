@@ -24,7 +24,8 @@ else:
                      title='Average Unit Price by Product Category',
                      labels={'product_category_name': 'Product Category', 'unit_price': 'Average Unit Price'},
                      color='unit_price',  # Color by unit price
-                     color_continuous_scale=px.colors.sequential.Blues)  # Dark blue color scale
+                     color_continuous_scale=px.colors.sequential.Plasma,  # Contrast color scale
+                     template='plotly_white')  # Use a light template
 
         # Update layout for better appearance
         fig.update_layout(
@@ -32,8 +33,8 @@ else:
             xaxis_title_font=dict(size=18, color='darkblue'),
             yaxis_title_font=dict(size=18, color='darkblue'),
             xaxis_tickangle=-45,  # Rotate x-axis labels for better readability
-            plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
-            paper_bgcolor='rgba(255,255,255,0.95)',  # Light paper background for contrast
+            plot_bgcolor='rgba(255,255,255,0)',  # Transparent plot background
+            paper_bgcolor='#E6F0FA',  # Set the background color of the paper
             font=dict(color='darkblue'),  # Set font color
         )
 
