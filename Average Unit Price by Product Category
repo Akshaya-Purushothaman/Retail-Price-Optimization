@@ -1,0 +1,36 @@
+import pandas as pd
+import plotly.express as px
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Check if the necessary column exists in the DataFrame
+    if 'unit_price' in df.columns:
+        # Step 3: Calculate the mean unit price by category
+        category_means = df.groupby('product_category_name')['unit_price'].mean().reset_index()
+
+        # Step 4: Create the bar graph using Plotly
+        fig = px.bar(category_means,
+                     x='product_category_name',
+                     y='unit_price',
+                     title='Average Unit Price by Product Category',
+                     labels={'product_category_name': 'Product Category', 'unit_price': 'Average Unit Price'})
+
+        # Step 5: Show the plot
+        fig.show()
+
+        # Optional: Save the figure as HTML
+        fig.write_html('bar_graph_average_unit_price.html')
+
+        # Step 6: Download the HTML file
+        files.download('bar_graph_average_unit_price.html')
+    else:
+        print("Necessary column 'unit_price' does not exist in the DataFrame.")
