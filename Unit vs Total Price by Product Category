@@ -1,0 +1,35 @@
+import pandas as pd
+import plotly.express as px
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Check if the necessary columns exist in the DataFrame
+    if 'product_category_name' in df.columns and 'unit_price' in df.columns and 'total_price' in df.columns:
+        # Step 3: Create the grouped bar graph using Plotly
+        fig = px.bar(df,
+                     x='product_category_name',
+                     y=['unit_price', 'total_price'],
+                     title='Unit vs Total Price by Product Category',
+                     labels={'value': 'Price', 'variable': 'Price Type'},
+                     barmode='group',
+                     color_discrete_sequence=['#003366', '#D5006D'])  # Dark blue and purple shade pink
+
+        # Step 4: Show the plot
+        fig.show()
+
+        # Optional: Save the figure as HTML
+        fig.write_html('grouped_bar_chart_unit_vs_total_price.html')
+
+        # Step 5: Download the HTML file
+        files.download('grouped_bar_chart_unit_vs_total_price.html')
+    else:
+        print("Necessary columns 'product_category_name', 'unit_price', or 'total_price' do not exist in the DataFrame.")
