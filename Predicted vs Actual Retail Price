@@ -1,0 +1,104 @@
+!pip install scikit-learn -U
+!pip install eli5 --no-cache-dir
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.io as pio
+pio.templates.default = "plotly_white"
+warnings.filterwarnings('ignore')
+
+from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.linear_model import Ridge
+from sklearn.ensemble import RandomForestRegressor
+
+df = pd.read_csv('retail_price.csv')
+X, y = df.drop(['product_id', 'unit_price'], axis=1), df['unit_price']
+X = pd.get_dummies(X)
+
+model = RandomForestRegressor(n_estimators=50, random_state=40)
+model.fit(X, y)
+y_pred = model.predict(X)
+print(f"R2 score: {r2_score(y, y_pred)}")
+print(f"Mean Absolute Error: {mean_absolute_error(y, y_pred)}")
+import pandas as pd
+import plotly.graph_objects as go
+from google.colab import files
+from sklearn.ensemble import RandomForestRegressor
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Assuming that X and y have already been defined in your earlier code
+if 'unit_price' in df.columns and 'product_id' in df.columns:
+    X, y = df.drop(['product_id', 'unit_price'], axis=1), df['unit_price']
+    X = pd.get_dummies(X)  # Handle categorical data
+
+    # Train a Random Forest Regressor
+    model = RandomForestRegressor(n_estimators=50, random_state=40)
+    model.fit(X, y)
+    y_pred = model.predict(X)  # Predicted values
+
+    # Step 3: Create a scatter plot using Plotly Graph Objects
+    fig = go.Figure()
+
+    # Add trace for the actual vs predicted prices (dark blue)
+    fig.add_trace(go.Scatter(
+        x=y,
+        y=y_pred,
+        mode='markers',
+        marker=dict(color='#003366', size=8),  # Dark blue for the scattered points
+        name='Predicted vs. Actual Prices'
+    ))
+
+    # Add a trace for the ideal prediction line (orange)
+    fig.add_trace(go.Scatter(
+        x=[min(y), max(y)],
+        y=[min(y), max(y)],
+        mode='lines',
+        line=dict(color='#FF6600', width=3),  # Orange for the ideal trend line
+        name='Ideal Trendline'
+    ))
+
+    # Step 4: Customize the layout with light background and clean styling
+    fig.update_layout(
+        title='Predicted vs Actual Retail Price',
+        xaxis_title='Actual Retail Price',
+        yaxis_title='Predicted Retail Price',
+        paper_bgcolor='#E6F0FA',  # Light blue overall background
+        plot_bgcolor='#F2F6FC',   # Slightly darker blue plot background
+        font=dict(color='#333333'),  # Dark gray font for readability
+        title_font=dict(size=24, color='#333333'),
+        xaxis=dict(
+            title_font=dict(size=18, color='#333333'),
+            tickfont=dict(color='#333333'),
+            showgrid=True,  # Add gridlines
+            gridcolor='#CCCCCC',  # Light gray gridlines
+            zerolinecolor='#AAAAAA'  # Light gray zero line
+        ),
+        yaxis=dict(
+            title_font=dict(size=18, color='#333333'),
+            tickfont=dict(color='#333333'),
+            showgrid=True,
+            gridcolor='#CCCCCC',
+            zerolinecolor='#AAAAAA'
+        ),
+        margin=dict(l=40, r=40, t=80, b=40),
+    )
+
+    # Step 5: Show the plot
+    fig.show()
+
+    # Optional: Save the figure as HTML
+    fig.write_html('predicted_vs_actual_retail_price_express.html')
+
+    # Step 6: Download the HTML file
+    files.download('predicted_vs_actual_retail_price_express.html')
+else:
+    print("The required columns 'unit_price' or 'product_id' do not exist in the DataFrame.")
