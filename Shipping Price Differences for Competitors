@@ -1,0 +1,67 @@
+import pandas as pd
+import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Check if the necessary columns exist in the DataFrame
+    if 'freight_price' in df.columns and all(f'fp{i}' in df.columns for i in range(1, 4)):
+        # Step 3: Calculate shipping price differences
+        df['fp1_diff'] = df['freight_price'] - df['fp1']
+        df['fp2_diff'] = df['freight_price'] - df['fp2']
+        df['fp3_diff'] = df['freight_price'] - df['fp3']
+
+        # Step 4: Create a subplot layout
+        fig = make_subplots(rows=1, cols=3, subplot_titles=("Competitor 1", "Competitor 2", "Competitor 3"))
+
+        # Add each bar graph to the subplot with new contrasting colors
+        colors = ['#2ECC71', '#3498DB', '#9B59B6']  # Green, Blue, and Purple colors
+
+        for i in range(1, 4):
+            comp = f"fp{i}_diff"
+            fig.add_trace(
+                go.Bar(
+                    x=df['product_category_name'],
+                    y=df[comp],
+                    name=f'Competitor {i}',
+                    marker_color=colors[i-1],  # Use defined colors
+                ),
+                row=1, col=i
+            )
+
+        # Update layout
+        fig.update_layout(
+            title='Shipping Price Differences for Competitors',
+            xaxis_title='Product Category',
+            yaxis_title='Shipping Price Difference',
+            showlegend=False,
+            height=600,  # Increased height for better visibility
+            paper_bgcolor='#E6F0FA',  # Set the background color of the paper
+            plot_bgcolor='rgba(255,255,255,0)'  # Set plot background to transparent
+        )
+
+        # Adjust x-axis for each subplot
+        for i in range(1, 4):
+            fig.update_xaxes(tickangle=45, row=1, col=i)  # Tilt x-axis labels for better readability
+            fig.update_yaxes(gridcolor='LightGray', row=1, col=i)  # Add gridlines for reference
+
+        # Step 5: Show the plot
+        fig.show()
+
+        # Optional: Save the figure as HTML
+        fig.write_html('shipping_price_differences_no_numbers.html')
+
+        # Step 6: Download the HTML file
+        files.download('shipping_price_differences_no_numbers.html')
+    else:
+        print("Necessary columns 'freight_price' or 'fp1', 'fp2', 'fp3' do not exist in the DataFrame.")
