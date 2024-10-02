@@ -1,0 +1,84 @@
+import pandas as pd
+from google.colab import files
+
+# Step 1: Specify the file path of the CSV file
+file_path = 'retail_price.csv'  # Replace with your actual file path
+
+# Step 2: Load the DataFrame from the specified CSV file path
+df = pd.read_csv(file_path)
+
+# Check if the DataFrame is loaded and has data
+if df.empty:
+    print("The DataFrame is empty. Please check the CSV file.")
+else:
+    # Step 3: Group by 'month_year' and aggregate the necessary statistics
+    monthly_df = df.groupby(by='month_year').agg({
+        'unit_price': 'mean',
+        'total_price': 'sum',
+        'freight_price': 'sum',
+        'qty': 'sum',
+        'weekday': 'sum',
+        'weekend': 'sum',
+        'customers': 'sum'
+    }).reset_index()
+
+    # Convert 'month_year' to datetime format
+    monthly_df['month_year'] = pd.to_datetime(monthly_df['month_year'], format='%d-%m-%Y')
+    monthly_df = monthly_df.sort_values(by='month_year')
+
+    # Step 4: Create the HTML table with custom CSS for styling
+    html_content = f"""
+    <html>
+    <head>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 20px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }}
+        table, th, td {{
+            border: 1px solid #003366; /* Dark blue border */
+        }}
+        th, td {{
+            padding: 10px;
+            text-align: center;
+            color: #333;
+        }}
+        th {{
+            background-color: #003366; /* Dark blue header */
+            color: white;
+        }}
+        tr:nth-child(even) {{
+            background-color: #f2f2f2; /* Light row color for contrast */
+        }}
+        tr:hover {{
+            background-color: #ddd; /* Highlight on hover */
+        }}
+        caption {{
+            caption-side: top;
+            font-size: 1.5em;
+            padding-bottom: 10px;
+            color: #003366;
+        }}
+    </style>
+    </head>
+    <body>
+        <table>
+            <caption>Monthly Aggregated Retail Price Data</caption>
+            {monthly_df.to_html(index=False, classes="styled-table", border=0)}
+        </table>
+    </body>
+    </html>
+    """
+
+    # Step 5: Write the HTML content to a file
+    with open('monthly_aggregated_data.html', 'w') as f:
+        f.write(html_content)
+
+    # Step 6: Download the HTML file
+    files.download('monthly_aggregated_data.html')
